@@ -1,16 +1,16 @@
 import os
+import logging
 import numpy as np
 import pandas as pd
 from flask import Blueprint, jsonify
-from utils.config import SCHOOL_DATASET_PATH
+from utils.config import SCHOOL_DATASET_PATH, DISTRICT_DATA_PATH, SCHOOL_DATASET_GID
 from utils.download_data import download_if_missing
 
-districts_bp = Blueprint("districts", __name__)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Primary data source - can be overridden by environment variable
-CSV_PATH = os.getenv("DISTRICT_DATA_PATH") or os.path.join(
-    os.path.dirname(__file__), "..", "data", "district_school_data.csv"
-)
+districts_bp = Blueprint("districts", __name__)
 
 # ── alias map: any variant → single canonical lowercase name ──────────────────
 DISTRICT_ALIAS = {
@@ -42,19 +42,24 @@ def _canonical(name: str) -> str:
 def load_data():
     """Load district data with error handling and fallback."""
     try:
-        # 6. Ensure dataset loading supports external sources/automatic download
-        if not os.path.exists(CSV_PATH):
-            print(f"[DATA] Local data missing at {CSV_PATH}. Checking for base dataset...")
-            # If the processed data is missing, we might need the base dataset
-            download_if_missing(SCHOOL_DATASET_PATH)
-            # In a real production app, we might trigger a pipeline run here 
-            # or download the processed CSV directly from a CDN/Drive.
+        # 3. Dataset handling (IMPORTANT)
+        if not os.path.exists(DISTRICT_DATA_PATH):
+            logger.warning(f"Processed data missing at {DISTRICT_DATA_PATH}. Checking base dataset...")
             
-        if not os.path.exists(CSV_PATH):
-            print(f"[ERROR] Data file not found: {CSV_PATH}")
+            # Try to ensure base dataset exists
+            if download_if_missing(SCHOOL_DATASET_PATH, SCHOOL_DATASET_GID):
+                logger.info("Base dataset verified/downloaded. You may need to run the pipeline to generate processed data.")
+                # Note: We could trigger the pipeline here, but for production 
+                # we prefer serving a fallback or existing processed file.
+            else:
+                logger.error("Base dataset could not be retrieved.")
+
+        if not os.path.exists(DISTRICT_DATA_PATH):
+            logger.error(f"Final data file not found: {DISTRICT_DATA_PATH}")
             return []
 
-        df = pd.read_csv(CSV_PATH)
+        logger.info(f"Loading district data from {DISTRICT_DATA_PATH}...")
+        df = pd.read_csv(DISTRICT_DATA_PATH)
 
         # ── normalise column names ────────────────────────────────────────────
         df.columns = df.columns.str.strip().str.lower()
@@ -67,7 +72,7 @@ def load_data():
         if "district" in df.columns:
             df["district"] = df["district"].map(_canonical)
 
-        # ── score calculation (if not already present) ────────────────────────
+        # ── score calculation (fallback) ────────────────────────
         if "score" not in df.columns and "schools" in df.columns:
             df["log_schools"] = np.log1p(df["schools"])
             max_log = df["log_schools"].max()
@@ -81,14 +86,16 @@ def load_data():
         cols = [c for c in ["district", "schools", "score", "lat", "lng"] if c in df.columns]
         df = df[cols]
 
-        return df.to_dict(orient="records")
+        data = df.to_dict(orient="records")
+        logger.info(f"Successfully loaded {len(data)} districts.")
+        return data
 
     except Exception as exc:
-        # 7. Ensure the app does not crash if dataset is missing
-        print(f"[ERROR] Failed to load district data: {exc}")
+        # 7. Error handling - Ensure the app does not crash
+        logger.error(f"Failed to load district data: {exc}", exc_info=True)
         return []
 
-# Lazy loading to avoid issues with missing files during module import
+# Lazy loading
 _cached_data = None
 
 def get_data():
@@ -99,7 +106,10 @@ def get_data():
 
 @districts_bp.route("/api/districts")
 def get_districts():
-    return jsonify(get_data())
+    data = get_data()
+    if not data:
+        return jsonify({"error": "Dataset unavailable", "message": "The server could not load school data"}), 503
+    return jsonify(data)
 
 @districts_bp.route("/api/summary")
 def get_summary():
@@ -134,6 +144,8 @@ def health_check():
     data = get_data()
     return jsonify({
         "status": "healthy" if data else "degraded",
-        "districts_loaded": len(data)
+        "dataset_loaded": bool(data),
+        "districts_count": len(data)
     })
+
 
