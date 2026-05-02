@@ -1,0 +1,9 @@
+Flask==3.0.3
+Flask-Cors==5.0.0
+python-dotenv==1.0.1
+pandas==2.2.3
+beautifulsoup4==4.12.3
+gunicorn==23.0.0
+requests==2.32.3
+httpx==0.25.2
+aiofiles==23.2.1

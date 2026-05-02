@@ -1,0 +1,55 @@
+import { useCallback, useEffect, useState } from "react";
+import { fetchDistricts, fetchSummary, refreshPipeline } from "../services/api";
+
+export const useOutreachData = () => {
+  const [status, setStatus] = useState("loading");
+  const [districts, setDistricts] = useState([]);
+  const [summary, setSummary] = useState({
+    total_schools: 0,
+    avg_score: 0,
+    high_priority: 0,
+    high_priority_districts: 0
+  });
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  const loadData = useCallback(async () => {
+    try {
+      setStatus("loading");
+      const [districtData, summaryData] = await Promise.all([
+        fetchDistricts(),
+        fetchSummary()
+      ]);
+      setDistricts(districtData);
+      setSummary(summaryData);
+      setLastUpdated(new Date());
+      setStatus("ready");
+    } catch (error) {
+      setStatus("error");
+    }
+  }, []);
+
+  const runRefresh = useCallback(async () => {
+    try {
+      setStatus("loading");
+      await refreshPipeline();
+    } catch (error) {
+      // /api/refresh failed — not fatal, still reload the current data
+      console.warn("[Refresh] /api/refresh failed:", error.message);
+    }
+    // Always reload data after refresh attempt (success or failure)
+    await loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return {
+    status,
+    districts,
+    summary,
+    lastUpdated,
+    refresh: runRefresh,
+    retry: loadData
+  };
+};
