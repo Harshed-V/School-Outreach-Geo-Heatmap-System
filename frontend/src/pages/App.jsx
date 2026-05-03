@@ -19,11 +19,18 @@ const App = () => {
   // Sync data→state once loaded
   const [data, setData] = useState([]);
   useEffect(() => {
-    setData(districts);
+    if (Array.isArray(districts)) {
+      setData(districts);
+    } else {
+      console.warn("[App] districts is not an array, defaulting to []", districts);
+      setData([]);
+    }
   }, [districts]);
 
   // ── Filtered list (memoised) ───────────────────────────────────────────────
   const filteredData = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    
     const q = search.toLowerCase();
     return data.filter((d) => {
       if (q && !d.district?.toLowerCase().includes(q)) return false;
@@ -33,10 +40,10 @@ const App = () => {
     });
   }, [data, search, selectedDistrict, scoreRange]);
 
-  const topDistricts = useMemo(
-    () => [...filteredData].sort((a, b) => b.score - a.score).slice(0, 5),
-    [filteredData]
-  );
+  const topDistricts = useMemo(() => {
+    if (!Array.isArray(filteredData)) return [];
+    return [...filteredData].sort((a, b) => b.score - a.score).slice(0, 5);
+  }, [filteredData]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleSelect = useCallback((district) => {
@@ -47,6 +54,7 @@ const App = () => {
 
   const handleDistrictChange = useCallback((value) => {
     setSelectedDistrict(value);
+    if (!Array.isArray(data)) return;
     const found = data.find((d) => d.district === value);
     if (found) setFocused(found);
   }, [data]);

@@ -89,11 +89,13 @@ export const DistrictMap = ({ districts = [], focused, onSelectDistrict }) => {
   // Create score lookup using the hybrid system
   const scoreMap = useMemo(() => {
     const map = {};
-    districts.forEach(d => {
-      if (d && d.district) {
-        map[getCanonicalDistrict(d.district)] = d.score;
-      }
-    });
+    if (Array.isArray(districts)) {
+      districts.forEach(d => {
+        if (d && d.district) {
+          map[getCanonicalDistrict(d.district)] = d.score;
+        }
+      });
+    }
     return map;
   }, [districts]);
 
@@ -157,7 +159,9 @@ export const DistrictMap = ({ districts = [], focused, onSelectDistrict }) => {
         });
       },
       click: () => {
-        const districtData = districts.find(d => getCanonicalDistrict(d.district) === geoName);
+        const districtData = Array.isArray(districts) 
+          ? districts.find(d => getCanonicalDistrict(d.district) === geoName)
+          : null;
         if (districtData && onSelectDistrict) {
           onSelectDistrict(districtData);
         }

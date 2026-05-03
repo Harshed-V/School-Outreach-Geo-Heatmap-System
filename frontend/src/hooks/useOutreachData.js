@@ -19,11 +19,26 @@ export const useOutreachData = () => {
         fetchDistricts(),
         fetchSummary()
       ]);
-      setDistricts(districtData);
-      setSummary(summaryData);
+
+      console.log("[useOutreachData] API Response - Districts:", districtData);
+      console.log("[useOutreachData] API Response - Summary:", summaryData);
+
+      // Handle both raw array and { data: [] } wrapper
+      const finalDistricts = Array.isArray(districtData) 
+        ? districtData 
+        : (districtData?.data && Array.isArray(districtData.data) ? districtData.data : []);
+
+      setDistricts(finalDistricts);
+      setSummary(summaryData || {
+        total_schools: 0,
+        avg_score: 0,
+        high_priority: 0,
+        high_priority_districts: 0
+      });
       setLastUpdated(new Date());
       setStatus("ready");
     } catch (error) {
+      console.error("[useOutreachData] Load error:", error);
       setStatus("error");
     }
   }, []);
