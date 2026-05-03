@@ -23,6 +23,14 @@ export const useOutreachData = () => {
       console.log("[useOutreachData] API Response - Districts:", districtData);
       console.log("[useOutreachData] API Response - Summary:", summaryData);
 
+      // 3. Prevent rendering crash if API returns HTML (common when baseURL is wrong)
+      const isHtml = (val) => typeof val === "string" && val.trim().toLowerCase().startsWith("<!doctype");
+      
+      if (isHtml(districtData) || isHtml(summaryData)) {
+        console.error("[useOutreachData] Received HTML instead of JSON. Check VITE_API_BASE_URL.");
+        throw new Error("Invalid API response (HTML)");
+      }
+
       // Handle both raw array and { data: [] } wrapper
       const finalDistricts = Array.isArray(districtData) 
         ? districtData 
