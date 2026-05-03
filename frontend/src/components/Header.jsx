@@ -3,16 +3,12 @@ import logo from "../assets/logo.svg";
 export const Header = ({ onRefresh, lastUpdated, isRefreshing, onOpenSidebar }) => {
   return (
     <header className="header" role="banner">
-      <button
-        className="menu-btn"
-        onClick={onOpenSidebar}
-        aria-label="Open filters sidebar"
-        aria-haspopup="dialog"
-      >
-        <svg className="menu-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
+      <label className="burger" onClick={onOpenSidebar} aria-label="Open filters sidebar">
+        <input type="checkbox" readOnly checked={false} />
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
 
       <div className="header-brand">
         <img

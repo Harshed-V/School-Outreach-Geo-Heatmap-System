@@ -489,7 +489,6 @@ button               { font-family: inherit; font-size: inherit; cursor: pointer
 /* ── Responsive breakpoints ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
   /* Show hamburger, hide sidebar on mobile */
-  .menu-btn { display: flex; }
   .sidebar  { display: none; }
 
   .drawer .sidebar {
@@ -560,4 +559,70 @@ button               { font-family: inherit; font-size: inherit; cursor: pointer
     background-color: #b3d4fc;
     box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
   }
+}
+
+/* ── Burger Menu Button (from Uiverse.io by Cevorob) ───────────────────────── */
+.burger {
+  position: relative;
+  width: 26px;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+  display: none; /* Shown on mobile */
+  flex-shrink: 0;
+}
+
+.burger input {
+  display: none;
+}
+
+.burger span {
+  display: block;
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  background: var(--text-primary);
+  border-radius: 9px;
+  opacity: 1;
+  left: 0;
+  transform: rotate(0deg);
+  transition: .25s ease-in-out;
+}
+
+.burger span:nth-of-type(1) {
+  top: 0px;
+  transform-origin: left center;
+}
+
+.burger span:nth-of-type(2) {
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center;
+}
+
+.burger span:nth-of-type(3) {
+  top: 100%;
+  transform-origin: left center;
+  transform: translateY(-100%);
+}
+
+.burger input:checked ~ span:nth-of-type(1) {
+  transform: rotate(45deg);
+  top: 0px;
+  left: 3px;
+}
+
+.burger input:checked ~ span:nth-of-type(2) {
+  width: 0%;
+  opacity: 0;
+}
+
+.burger input:checked ~ span:nth-of-type(3) {
+  transform: rotate(-45deg);
+  top: 18px;
+  left: 3px;
+}
+
+@media (max-width: 768px) {
+  .burger { display: block; }
 }
