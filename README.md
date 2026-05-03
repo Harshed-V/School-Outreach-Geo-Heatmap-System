@@ -2,6 +2,8 @@
 
 A robust, data-driven web application to visualize school outreach potential across Tamil Nadu districts using an interactive choropleth map.
 
+**Live Demo:** [https://school-outreach-geo-heatmap-system.vercel.app/](https://school-outreach-geo-heatmap-system.vercel.app/)
+
 ## Features
 - **Dynamic Choropleth Map**: District-level visualization using React-Leaflet and native GeoJSON.
 - **Robust Data Pipeline**: Flask/Pandas backend that cleans and auto-normalizes data scoring (0-100 scale).
