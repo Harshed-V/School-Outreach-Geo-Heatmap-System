@@ -24,6 +24,7 @@ const api = axios.create({
 });
 
 export const fetchDistricts = async () => {
+  // baseURL is already defined above, endpoints should just be the path
   const response = await api.get("/api/districts");
   return response.data;
 };
@@ -34,7 +35,6 @@ export const fetchSummary = async () => {
 };
 
 export const refreshPipeline = async () => {
-  // Backend expects POST based on routes/districts.py
   const response = await api.post("/api/refresh");
   return response.data;
 };

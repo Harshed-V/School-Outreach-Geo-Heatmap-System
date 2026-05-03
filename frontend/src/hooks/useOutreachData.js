@@ -1,78 +1,38 @@
-import { useCallback, useEffect, useState } from "react";
-import { fetchDistricts, fetchSummary, refreshPipeline } from "../services/api";
+import { useCallback, useState } from "react";
+import { refreshPipeline } from "../services/api";
+import { useBackendData } from "./useBackendData";
 
 export const useOutreachData = () => {
-  const [status, setStatus] = useState("loading");
-  const [districts, setDistricts] = useState([]);
-  const [summary, setSummary] = useState({
-    total_schools: 0,
-    avg_score: 0,
-    high_priority: 0,
-    high_priority_districts: 0
-  });
   const [lastUpdated, setLastUpdated] = useState(new Date());
-
-  const loadData = useCallback(async () => {
-    try {
-      setStatus("loading");
-      const [districtData, summaryData] = await Promise.all([
-        fetchDistricts(),
-        fetchSummary()
-      ]);
-
-      console.log("[useOutreachData] API Response - Districts:", districtData);
-      console.log("[useOutreachData] API Response - Summary:", summaryData);
-
-      // 3. Prevent rendering crash if API returns HTML (common when baseURL is wrong)
-      const isHtml = (val) => typeof val === "string" && val.trim().toLowerCase().startsWith("<!doctype");
-      
-      if (isHtml(districtData) || isHtml(summaryData)) {
-        console.error("[useOutreachData] Received HTML instead of JSON. Check VITE_API_BASE_URL.");
-        throw new Error("Invalid API response (HTML)");
-      }
-
-      // Handle both raw array and { data: [] } wrapper
-      const finalDistricts = Array.isArray(districtData) 
-        ? districtData 
-        : (districtData?.data && Array.isArray(districtData.data) ? districtData.data : []);
-
-      setDistricts(finalDistricts);
-      setSummary(summaryData || {
-        total_schools: 0,
-        avg_score: 0,
-        high_priority: 0,
-        high_priority_districts: 0
-      });
-      setLastUpdated(new Date());
-      setStatus("ready");
-    } catch (error) {
-      console.error("[useOutreachData] Load error:", error);
-      setStatus("error");
-    }
-  }, []);
+  
+  const { 
+    data, 
+    loading, 
+    retryCount, 
+    error, 
+    refetch 
+  } = useBackendData();
 
   const runRefresh = useCallback(async () => {
     try {
-      setStatus("loading");
       await refreshPipeline();
+      await refetch();
+      setLastUpdated(new Date());
     } catch (error) {
-      // /api/refresh failed — not fatal, still reload the current data
       console.warn("[Refresh] /api/refresh failed:", error.message);
+      // Fallback to just refetching the data
+      await refetch();
     }
-    // Always reload data after refresh attempt (success or failure)
-    await loadData();
-  }, [loadData]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  }, [refetch]);
 
   return {
-    status,
-    districts,
-    summary,
+    status: loading ? "loading" : (error ? "error" : "ready"),
+    districts: data.districts,
+    summary: data.summary,
     lastUpdated,
+    retryCount,
+    error,
     refresh: runRefresh,
-    retry: loadData
+    retry: refetch
   };
 };

@@ -7,7 +7,7 @@ import { LoadingState, EmptyState, ErrorState } from "../components/MapStates";
 import { useOutreachData } from "../hooks/useOutreachData";
 
 const App = () => {
-  const { status, districts, summary, lastUpdated, refresh, retry } = useOutreachData();
+  const { status, districts, summary, lastUpdated, retryCount, error, refresh, retry } = useOutreachData();
 
   // ── Filters ────────────────────────────────────────────────────────────────
   const [search, setSearch]                   = useState("");
@@ -127,8 +127,8 @@ const App = () => {
 
         {/* Map area */}
         <main className="map-area" id="map-main">
-          {status === "loading" && <LoadingState />}
-          {status === "error"   && <ErrorState onRetry={retry} />}
+          {status === "loading" && <LoadingState retryCount={retryCount} />}
+          {status === "error"   && <ErrorState onRetry={retry} error={error} />}
           {status === "ready" && filteredData.length === 0 && <EmptyState />}
           {mapReady && (
             <>

@@ -1,22 +1,28 @@
-export const LoadingState = () => (
+export const LoadingState = ({ retryCount = 0 }) => (
   <div className="state-screen" role="status" aria-live="polite">
-    <div className="skeleton-map" aria-hidden="true">
-      <div className="skeleton-pulse skeleton-block" style={{ width: "60%", height: "40%" }} />
-      <div className="skeleton-pulse skeleton-block" style={{ width: "45%", height: "30%", marginTop: "1rem" }} />
-      <div className="skeleton-pulse skeleton-block" style={{ width: "70%", height: "20%", marginTop: "1rem" }} />
-    </div>
-    <div className="spinner" aria-hidden="true" />
-    <p className="state-message">Loading map data…</p>
+    <section className="dots-container">
+      <div className="loading-dot"></div>
+      <div className="loading-dot"></div>
+      <div className="loading-dot"></div>
+      <div className="loading-dot"></div>
+      <div className="loading-dot"></div>
+    </section>
+    <p className="state-message">
+      {retryCount > 0 ? `Retrying... (${retryCount}/10)` : "Waking up server..."}
+    </p>
+    <p className="state-hint">
+      First load may take 30–50 seconds on Render's free tier.
+    </p>
   </div>
 );
 
-export const ErrorState = ({ onRetry }) => (
+export const ErrorState = ({ onRetry, error }) => (
   <div className="state-screen" role="alert">
     <div className="state-icon" aria-hidden="true">⚠️</div>
-    <p className="state-message state-error">Failed to load district data.</p>
-    <p className="state-hint">Check that the backend is running on port 5000.</p>
+    <p className="state-message state-error">Failed to connect to server</p>
+    {error && <p className="state-hint">{error}</p>}
     <button className="retry-btn" onClick={onRetry}>
-      ↻ Retry
+      ↻ Try Again
     </button>
   </div>
 );
