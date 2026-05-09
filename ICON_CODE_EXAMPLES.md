@@ -5,7 +5,6 @@
 ### Example 1: Basic Dashboard Usage
 ```jsx
 import { InsightsSection } from "@/components/outreach/InsightsSection";
-
 export default function Dashboard() {
   const [metrics, setMetrics] = useState({
     totalSchools: 28820,
